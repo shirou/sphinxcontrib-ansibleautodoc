@@ -1,0 +1,5 @@
+- name: first in role
+  debug: msg="first in role"
+- name: second in role
+  debug: msg="second in role"
+- include: included.yml

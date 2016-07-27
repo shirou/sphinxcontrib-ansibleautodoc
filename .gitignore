@@ -1,0 +1,3 @@
+*.pyc
+tests/sphinx/_build/
+dist

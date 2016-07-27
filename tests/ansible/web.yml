@@ -1,0 +1,27 @@
+- name: test playbook
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: first task
+      debug: msg="one"
+    - name: second task
+      debug: 
+        msg: "one"
+        verbosity: no
+    - include: included.yml
+    - name: condition
+      debug: msg="condition"
+      when: true
+
+    - name: multiple args
+      shell: ls
+      when:
+        - 1 == 1
+        - 2 == 2
+      tags: tag
+      become: yes
+
+  roles:
+    - role: three
+    
+    
