@@ -2,22 +2,19 @@
 
 from setuptools import setup, find_packages
 
-long_desc = '''
-autodoc for ansible playbook
-'''
 
 requires = ['Sphinx>=1.4', 'setuptools']
 
 setup(
     name='sphinxcontrib_ansibleautodoc',
-    version='0.0.1',
+    version='0.0.2',
     url='http://github.com/shirou/sphinxcontrib-ansibleautodoc',
     download_url='http://pypi.python.org/pypi/sphinxcontrib-ansibleautodoc',
     license='BSD',
     author='WAKAYAMA Shirou',
     author_email='shirou.faw@gmail.com',
     description='autodoc for ansible playbook',
-    long_description=long_desc,
+    long_description=open("README.rst").read(),
     zip_safe=False,
     classifiers=[
         'Development Status :: 4 - Beta',

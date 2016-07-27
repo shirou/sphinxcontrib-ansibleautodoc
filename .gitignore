@@ -1,3 +1,4 @@
 *.pyc
 tests/sphinx/_build/
 dist
+sphinxcontrib_ansibleautodoc.egg-info
