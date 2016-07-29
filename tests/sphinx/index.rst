@@ -8,8 +8,6 @@ I want to write this very important ansible task.
 
 If that task has some arguments like `when`, these are also listed as follows.
 
-.. _condition_label:
-
 .. ansibleautotask:: condition
    :playbook: ../ansible/web.yml
 
@@ -21,3 +19,7 @@ If arguments are list, like this.
 
 
 You can see the avobe label. so we now use :ref:`condition_label` to the task.
+
+
+.. ansibleautotask:: hoghgoe
+   :playbook: ../ansible/web.yml

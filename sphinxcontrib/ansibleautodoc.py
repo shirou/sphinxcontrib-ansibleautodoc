@@ -221,7 +221,7 @@ class AnsibleAutoTaskDirective(Directive):
         taskname = "".join(self.content)
         task = self._cache.get(filename, taskname, role)
         if not task:
-            msg = 'filename: %s, taskname: %s is not found' % filename, taskname
+            msg = 'filename: %s, taskname: %s is not found' % (filename, taskname)
             self.state_machine.reporter.warning(msg, line=self.lineno)
             return []
 
