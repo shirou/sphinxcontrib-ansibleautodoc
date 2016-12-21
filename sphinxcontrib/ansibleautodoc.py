@@ -16,7 +16,7 @@ from sphinx.util.console import bold, darkgreen, brown
 
 import yaml
 
-from i18n import texts
+from .i18n import texts
 
 def is_same_mtime(path1, path2):
     try:
