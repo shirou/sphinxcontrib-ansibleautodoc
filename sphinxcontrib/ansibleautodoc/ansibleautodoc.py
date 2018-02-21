@@ -46,10 +46,31 @@ class Task(object):
     def __str__(self):
         return "{0}, {1}, {2}".format(self.filename, self.name, self.role_name)
 
-    def make_arg(self, key, value):
+    def make_arg_simple(self, key, value):
         name = nodes.field_name(text=key)
         body = nodes.field_body()
         body.append(nodes.emphasis(text=value))
+        field = nodes.field()
+        field += [name, body]
+        return field
+
+    def make_list_representation(self, value):
+        bl = nodes.bullet_list()
+        if isinstance(value, list):
+            for v in value:
+                body = nodes.literal(text=v)
+                bl.append(nodes.list_item('', body))
+        elif isinstance(value, dict):
+            for k,v in value.items():
+                body = nodes.literal(text="%s=%s" % (k, v))
+                bl.append(nodes.list_item('', body))
+        return bl
+
+    def make_arg_complex(self, key, value):
+        bl = self.make_list_representation(value)
+        name = nodes.field_name(text=key)
+        body = nodes.field_body()
+        body.append(bl)
         field = nodes.field()
         field += [name, body]
         return field
@@ -66,9 +87,7 @@ class Task(object):
         # Search task definition for modules and associated arguments. 
         for key, value in self.args.items():
             if key not in arg_map.keys():
-                if key not in module_args:
-                    module_args[key] = []
-                module_args[key].append(value)
+                module_args[key] = value
 
         # Create task node (using type: admonition)
         item = nodes.admonition()
@@ -78,16 +97,12 @@ class Task(object):
         # Add modules and arguments to task node
         for module, args in module_args.items():
             field_list = nodes.field_list() # wrap module header in field_list
-            field_list.append(self.make_arg(module_title, module))
+            field_list.append(self.make_arg_simple(module_title, module))
             item.append(field_list)
-            for arg in args:
-                if isinstance(arg, str):
-                    item.append(nodes.literal_block(text=arg))
-                else:
-                    mlist = []
-                    for k, v in arg.items():
-                        mlist.append("%s=%s" % (k, v))
-                    item.append(nodes.literal(text=" ".join(mlist)))
+            if isinstance(args, str):
+                item.append(nodes.literal_block(text=args))
+            else:
+                item.append(self.make_list_representation(args))
 
         # Handle non-module task parameters.
         field_list = nodes.field_list()
@@ -97,30 +112,10 @@ class Task(object):
             if arg not in self.args:
                 continue
             value = self.args[arg]  # value of that task arg
-            if isinstance(value, list):
-                bl = nodes.bullet_list()
-                for v in value:
-                    body = nodes.literal(text=v)
-                    bl.append(nodes.list_item('', body))
-                name = nodes.field_name(text=txt)
-                body = nodes.field_body()
-                body.append(bl)
-                field = nodes.field()
-                field += [name, body]
-                field_list.append(field)
-            if isinstance(value, dict):
-                bl = nodes.bullet_list()
-                for k,v in value.items():
-                    body = nodes.literal(text="%s=%s" % (k, v))
-                    bl.append(nodes.list_item('', body))
-                name = nodes.field_name(text=txt)
-                body = nodes.field_body()
-                body.append(bl)
-                field = nodes.field()
-                field += [name, body]
-                field_list.append(field)
+            if isinstance(value, list) or isinstance(value, dict):
+                field_list.append(self.make_arg_complex(txt, value))
             else:
-                field_list.append(self.make_arg(txt, value))
+                field_list.append(self.make_arg_simple(txt, value))
 
         item.append(field_list)
 
@@ -132,7 +127,7 @@ class AutodocCache(object):
     def parse_include(self, filename, include, role_name=None):
         d = os.path.dirname(filename)
         if role_name:
-            i = os.path.join(d, "roles", role['role'], 'tasks', include)
+            i = os.path.join(d, "roles", role_name, 'tasks', include)
         else:
             i =  os.path.join(d, include)
 
@@ -152,7 +147,7 @@ class AutodocCache(object):
 
     def parse_task(self, filename, task, role_name=None):
         if 'include' in task:
-            self.parse_include(filename, task['include'])
+            self.parse_include(filename, task['include'], role_name)
             return
         if 'name' not in task:
             return

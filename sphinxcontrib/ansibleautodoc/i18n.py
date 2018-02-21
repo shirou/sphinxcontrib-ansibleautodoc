@@ -13,7 +13,7 @@ texts = {
             'register': 'register',
             'run_once': 'run once',
             'with_items': 'with items',
-            'environment': 'environment vars',
+            'environment': 'envvars',
             'tags': 'tags',
             'name': None, # used for field skip
         },
