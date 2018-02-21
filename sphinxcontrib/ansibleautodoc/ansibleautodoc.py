@@ -12,7 +12,6 @@ from docutils import nodes
 from docutils.parsers import rst
 from docutils.parsers.rst import Directive
 from docutils.statemachine import ViewList
-from sphinx.util.console import bold, darkgreen, brown
 
 import yaml
 
@@ -35,7 +34,6 @@ def basename(path, ext=None):
 
     return filename
 
-
 class Task(object):
     role_name = ""
     def __init__(self, filename, name, args, role_name=None):
@@ -48,14 +46,34 @@ class Task(object):
     def __str__(self):
         return "{0}, {1}, {2}".format(self.filename, self.name, self.role_name)
 
-    def make_arg(self, key, value):
+    def make_arg_simple(self, key, value):
         name = nodes.field_name(text=key)
         body = nodes.field_body()
         body.append(nodes.emphasis(text=value))
         field = nodes.field()
         field += [name, body]
         return field
-        
+
+    def make_list_representation(self, value):
+        bl = nodes.bullet_list()
+        if isinstance(value, list):
+            for v in value:
+                body = nodes.literal(text=v)
+                bl.append(nodes.list_item('', body))
+        elif isinstance(value, dict):
+            for k,v in value.items():
+                body = nodes.literal(text="%s=%s" % (k, v))
+                bl.append(nodes.list_item('', body))
+        return bl
+
+    def make_arg_complex(self, key, value):
+        bl = self.make_list_representation(value)
+        name = nodes.field_name(text=key)
+        body = nodes.field_body()
+        body.append(bl)
+        field = nodes.field()
+        field += [name, body]
+        return field
 
     def make_node(self, lang='en'):
         if lang not in texts.keys():
@@ -64,54 +82,44 @@ class Task(object):
         task_title = texts[lang]["task_title"]
         module_title = texts[lang]["module_title"]
 
-        module = ""
-        module_args = []
-        # first, search module 
-        for arg, m in self.args.items():
-            if arg not in arg_map.keys():
-                module = arg
-                module_args.append(m)
+        module_args = {}
 
+        # Search task definition for modules and associated arguments. 
+        for key, value in self.args.items():
+            if key not in arg_map.keys():
+                module_args[key] = value
+
+        # Create task node (using type: admonition)
         item = nodes.admonition()
         title = nodes.title(text=self.name)
         item.append(title)
 
-        for m in module_args:
-            if isinstance(m, str):
-                item.append(nodes.paragraph(text=m))
+        # Add modules and arguments to task node
+        for module, args in module_args.items():
+            field_list = nodes.field_list() # wrap module header in field_list
+            field_list.append(self.make_arg_simple(module_title, module))
+            item.append(field_list)
+            if isinstance(args, str):
+                item.append(nodes.literal_block(text=args))
             else:
-                mlist = []
-                for k, v in m.items():
-                    mlist.append("%s=%s" % (k, v))
-                item.append(nodes.paragraph(text=" ".join(mlist)))
+                item.append(self.make_list_representation(args))
 
+        # Handle non-module task parameters.
         field_list = nodes.field_list()
-        field_list.append(self.make_arg(module_title, module))
-        # second, create node tree
         for arg, txt in arg_map.items():
             if not txt:  # skip name etc...
                 continue
             if arg not in self.args:
                 continue
             value = self.args[arg]  # value of that task arg
-            if isinstance(value, list):
-                bl = nodes.bullet_list()
-                for v in value:
-                    body = nodes.emphasis(text=v)
-                    bl.append(nodes.list_item('', body))
-                name = nodes.field_name(text=txt)
-                body = nodes.field_body()
-                body.append(bl)
-                field = nodes.field()
-                field += [name, body]
-                field_list.append(field)
+            if isinstance(value, list) or isinstance(value, dict):
+                field_list.append(self.make_arg_complex(txt, value))
             else:
-                field_list.append(self.make_arg(txt, value))
+                field_list.append(self.make_arg_simple(txt, value))
 
         item.append(field_list)
 
         return item
-
 
 class AutodocCache(object):
     _cache = {}
@@ -119,7 +127,7 @@ class AutodocCache(object):
     def parse_include(self, filename, include, role_name=None):
         d = os.path.dirname(filename)
         if role_name:
-            i = os.path.join(d, "roles", role['role'], 'tasks', include)
+            i = os.path.join(d, "roles", role_name, 'tasks', include)
         else:
             i =  os.path.join(d, include)
 
@@ -139,7 +147,7 @@ class AutodocCache(object):
 
     def parse_task(self, filename, task, role_name=None):
         if 'include' in task:
-            self.parse_include(filename, task['include'])
+            self.parse_include(filename, task['include'], role_name)
             return
         if 'name' not in task:
             return
@@ -188,7 +196,6 @@ class AutodocCache(object):
             except:
                 raise
 
-
 class AnsibleAutoTaskDirective(Directive):
     directive_name = "ansibleautotask"
 
@@ -203,7 +210,6 @@ class AnsibleAutoTaskDirective(Directive):
     def run(self):
         self.assert_has_content()
         env = self.state.document.settings.env
-      
 
         if 'playbook' not in self.options:
             msg = 'playbook option is required '
@@ -230,13 +236,4 @@ class AnsibleAutoTaskDirective(Directive):
             lang = 'en'
 
         return [task.make_node(lang)]
-
-
-def setup(app):
-    classes = [
-        AnsibleAutoTaskDirective,
-    ]
-    for cls in classes:
-        app.add_directive(cls.directive_name, cls)
-
 

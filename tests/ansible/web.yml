@@ -21,7 +21,34 @@
       tags: tag
       become: yes
 
+    - set_fact:
+        my_var: 128
+
+    - name: looping with a condition.
+      shell: ls "{{ dir }}"
+      when: my_var == 128
+      with_items:
+        - ./
+        - ./my_dir
+        - ./another_dir/subdir
+    
+    - name: looping task with lots of parameters
+      some_module:
+        param1: 19
+        param2: "This is a string"
+        param3: 0.23
+      environment:
+        ITEM_PASS: "{{ item.password }}"
+        ITEM_USERNAME: "{{ item.username }}"
+        ITEM_VALUE: "{{ item.value }}"
+      with_items:
+        - password: abc123
+          username: simon
+          value: 11246
+        - password: bad_pass
+          username: yuen
+          value: 909090
+      register: proc_results
+
   roles:
     - role: three
-    
-    
