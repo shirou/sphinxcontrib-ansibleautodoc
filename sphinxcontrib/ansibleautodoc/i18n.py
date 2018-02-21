@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# simple i18n 
+# simple i18n
 
 texts = {
     "en": {
@@ -26,9 +26,9 @@ texts = {
             'become': 'sudo',
             'delegate_to': u'実行ホスト',
             'run_once': u'一度だけ実行',
-            'register': u'書き記す',          # from Google Translate - may be inaccurate.
-            'with_items': u'アイテム付き', # from Google Translate - may be inaccurate.
-            'environment': u'環境変数',   # from Google Translate - may be inaccurate.
+            'register': u'変数代入',
+            'with_items': u'繰り返し',
+            'environment': u'環境変数',
             'tags': u'タグ',
             'name': None, # used for field skip
         },
