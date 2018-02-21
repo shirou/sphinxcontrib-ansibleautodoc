@@ -7,7 +7,7 @@ requires = ['Sphinx>=1.4', 'setuptools']
 
 setup(
     name='sphinxcontrib_ansibleautodoc',
-    version='0.0.4',
+    version='0.0.5',
     url='http://github.com/shirou/sphinxcontrib-ansibleautodoc',
     download_url='http://pypi.python.org/pypi/sphinxcontrib-ansibleautodoc',
     license='BSD',
