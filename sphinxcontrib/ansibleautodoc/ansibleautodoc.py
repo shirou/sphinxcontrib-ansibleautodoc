@@ -12,7 +12,6 @@ from docutils import nodes
 from docutils.parsers import rst
 from docutils.parsers.rst import Directive
 from docutils.statemachine import ViewList
-from sphinx.util.console import bold, darkgreen, brown
 
 import yaml
 
@@ -35,7 +34,6 @@ def basename(path, ext=None):
 
     return filename
 
-
 class Task(object):
     role_name = ""
     def __init__(self, filename, name, args, role_name=None):
@@ -55,7 +53,6 @@ class Task(object):
         field = nodes.field()
         field += [name, body]
         return field
-        
 
     def make_node(self, lang='en'):
         if lang not in texts.keys():
@@ -64,30 +61,36 @@ class Task(object):
         task_title = texts[lang]["task_title"]
         module_title = texts[lang]["module_title"]
 
-        module = ""
-        module_args = []
-        # first, search module 
-        for arg, m in self.args.items():
-            if arg not in arg_map.keys():
-                module = arg
-                module_args.append(m)
+        module_args = {}
 
+        # Search task definition for modules and associated arguments. 
+        for key, value in self.args.items():
+            if key not in arg_map.keys():
+                if key not in module_args:
+                    module_args[key] = []
+                module_args[key].append(value)
+
+        # Create task node (using type: admonition)
         item = nodes.admonition()
         title = nodes.title(text=self.name)
         item.append(title)
 
-        for m in module_args:
-            if isinstance(m, str):
-                item.append(nodes.paragraph(text=m))
-            else:
-                mlist = []
-                for k, v in m.items():
-                    mlist.append("%s=%s" % (k, v))
-                item.append(nodes.paragraph(text=" ".join(mlist)))
+        # Add modules and arguments to task node
+        for module, args in module_args.items():
+            field_list = nodes.field_list() # wrap module header in field_list
+            field_list.append(self.make_arg(module_title, module))
+            item.append(field_list)
+            for arg in args:
+                if isinstance(arg, str):
+                    item.append(nodes.literal_block(text=arg))
+                else:
+                    mlist = []
+                    for k, v in arg.items():
+                        mlist.append("%s=%s" % (k, v))
+                    item.append(nodes.literal(text=" ".join(mlist)))
 
+        # Handle non-module task parameters.
         field_list = nodes.field_list()
-        field_list.append(self.make_arg(module_title, module))
-        # second, create node tree
         for arg, txt in arg_map.items():
             if not txt:  # skip name etc...
                 continue
@@ -97,7 +100,18 @@ class Task(object):
             if isinstance(value, list):
                 bl = nodes.bullet_list()
                 for v in value:
-                    body = nodes.emphasis(text=v)
+                    body = nodes.literal(text=v)
+                    bl.append(nodes.list_item('', body))
+                name = nodes.field_name(text=txt)
+                body = nodes.field_body()
+                body.append(bl)
+                field = nodes.field()
+                field += [name, body]
+                field_list.append(field)
+            if isinstance(value, dict):
+                bl = nodes.bullet_list()
+                for k,v in value.items():
+                    body = nodes.literal(text="%s=%s" % (k, v))
                     bl.append(nodes.list_item('', body))
                 name = nodes.field_name(text=txt)
                 body = nodes.field_body()
@@ -111,7 +125,6 @@ class Task(object):
         item.append(field_list)
 
         return item
-
 
 class AutodocCache(object):
     _cache = {}
@@ -188,7 +201,6 @@ class AutodocCache(object):
             except:
                 raise
 
-
 class AnsibleAutoTaskDirective(Directive):
     directive_name = "ansibleautotask"
 
@@ -203,7 +215,6 @@ class AnsibleAutoTaskDirective(Directive):
     def run(self):
         self.assert_has_content()
         env = self.state.document.settings.env
-      
 
         if 'playbook' not in self.options:
             msg = 'playbook option is required '
@@ -230,13 +241,4 @@ class AnsibleAutoTaskDirective(Directive):
             lang = 'en'
 
         return [task.make_node(lang)]
-
-
-def setup(app):
-    classes = [
-        AnsibleAutoTaskDirective,
-    ]
-    for cls in classes:
-        app.add_directive(cls.directive_name, cls)
-
 

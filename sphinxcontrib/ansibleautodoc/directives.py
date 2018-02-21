@@ -23,12 +23,11 @@ class NamedNoteDirective(BaseAdmonition):
             self.options['class'] = [self.css_class]
 
         ret = make_admonition(
-            nodes.admonition, self.name, [title], self.options,
+            node_class, self.name, [title], self.options,
             self.content, self.lineno, self.content_offset, self.block_text,
             self.state, self.state_machine)
         ret[0].attributes['name'] = self.name
         return ret
-
 
 class ColumnDirective(NamedNoteDirective):
     css_class = 'column'

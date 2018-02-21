@@ -21,7 +21,16 @@
       tags: tag
       become: yes
 
+    - set_fact:
+        my_var: 128
+
+    - name: looping with a condition.
+      shell: ls "{{ dir }}"
+      when: my_var == 128
+      with_items:
+        - ./
+        - ./my_dir
+        - ./another_dir/subdir
+
   roles:
     - role: three
-    
-    

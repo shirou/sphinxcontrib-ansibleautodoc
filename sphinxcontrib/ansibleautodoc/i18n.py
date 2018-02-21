@@ -10,9 +10,12 @@ texts = {
             'when': 'condition',
             'become': 'sudo',
             'delegate_to': 'host',
+            'register': 'register',
             'run_once': 'run once',
+            'with_items': 'with items',
+            'environment': 'environment vars',
             'tags': 'tags',
-            'name': None,
+            'name': None, # used for field skip
         },
     },
     "ja": {
@@ -23,8 +26,11 @@ texts = {
             'become': 'sudo',
             'delegate_to': u'実行ホスト',
             'run_once': u'一度だけ実行',
+            'register': u'書き記す',          # from Google Translate - may be inaccurate.
+            'with_items': u'アイテム付き', # from Google Translate - may be inaccurate.
+            'environment': u'環境変数',   # from Google Translate - may be inaccurate.
             'tags': u'タグ',
-            'name': None,  # used for 
+            'name': None, # used for field skip
         },
     },
 }
